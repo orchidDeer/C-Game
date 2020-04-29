@@ -49,9 +49,9 @@ struct Player {
 struct Game {
     clock_t time;
     clock_t oldtime;
-    clock_t physiktime;
-    clock_t deltaTime;
-    clock_t DestroyingTime;
+    int physiktime;
+    int deltaTime;
+    int DestroyingTime;
     ///Console Handles
     HANDLE hOut;
 };
@@ -79,22 +79,22 @@ int isButtonPresst = 0;
 int waitingTime = 200;
 int waitingTimePhysik = 300;
 
-void createMap(int seed, char air[], char block[]);
-void drawMap(struct Map map, struct Cube cubes[], struct Game game, struct Player player);
-void ReDrawPosition(int x, int y, unsigned short colour, struct Game game, char Text);
-int getY(int sizeX, int Y);
+void createMap(char *air, char *block);
+void drawMap(struct Map *map, struct Cube *cubes, struct Game *game, struct Player *player);
+void ReDrawPosition(int *x, int *y, unsigned short *colour, struct Game *game, char *Text);
 
 ///Controls for Player
 void playerControls();
-clock_t delayA = 0;
-clock_t delayD = 0;
-clock_t delayW = 0;
 
 ///Player GUI
 void initPlayerGUI();
 
 ///Gives back the Y Position of the PLayer
-int spawnPlayer(char CGrass, char CPlayer, struct Player player);
+int spawnPlayer(char *CGrass, char *CPlayer, struct Player *player);
+
+int delayA = 0;
+int delayD = 0;
+int delayW = 0;
 
 int RandSeed;
 
@@ -135,7 +135,7 @@ int main()
 
     ///Player
     Player1.x = 11;
-    Player1.y = spawnPlayer(cubes[1].Symbol, cubes[3].Symbol, Player1);
+    Player1.y = spawnPlayer(&cubes[1].Symbol, &cubes[3].Symbol, &Player1);
     Player1.watchDistanceX = 10;
     Player1.watchDistanceY = 5;
     Player1.AnimationStepp = 0;
@@ -147,7 +147,7 @@ int main()
 
     ///Zomby
     Zomby.x = 8;
-    Zomby.y = spawnPlayer(cubes[1].Symbol, cubes[4].Symbol, Zomby);
+    Zomby.y = spawnPlayer(&cubes[1].Symbol, &cubes[4].Symbol, &Zomby);
     cubes[4].Symbol = 'Z';
     ///                      |       8       8       8       8       8       8       8       8|
     strcpy(cubes[4].Texture, "BBBBBBBBBBBBBBBBBBBLLBBBBBBLLBBBBBBLLBBBBBBLLBBBBBBLLBBBBBBLLBBB");
@@ -162,16 +162,16 @@ int main()
     map.SizeY = 255;
     map.Matrix[0] = '\0';
 
-    createMap(22, " ", "X");
+    createMap(&cubes[0].Symbol, &cubes[1].Symbol);
 
-    drawMap(map, cubes, game, Player1);
+    drawMap(&map, cubes, &game, &Player1);
 
     initPlayerGUI();
 
     while(!GetAsyncKeyState(VK_ESCAPE))
     {
         game.oldtime = clock();
-        drawMap(map, cubes, game, Player1);
+        drawMap(&map, cubes, &game, &Player1);
         playerControls();
         game.time = clock();
         game.deltaTime = game.time - game.oldtime;
@@ -364,14 +364,14 @@ void playerControls()
     }
 }
 
-int spawnPlayer(char CGrass, char CPlayer, struct Player player)
+int spawnPlayer(char *CGrass, char *CPlayer, struct Player *player)
 {
     int y = 0;
     while(y != map.SizeY)
     {
-        if(map.Matrix[getPosition(map.SizeX, y + 1, player.x)] == CGrass)
+        if(map.Matrix[getPosition(map.SizeX, y + 1, player->x)] == CGrass)
         {
-            map.Matrix[getPosition(map.SizeX, y, player.x)] = CPlayer;
+            map.Matrix[getPosition(map.SizeX, y, player->x)] = CPlayer;
             break;
         }
         ++y;
@@ -389,13 +389,13 @@ void initPlayerGUI()
         {
             ///Hp bar
             if(y - map.SizeY == 1 && x > 2 && x < 13){
-                ReDrawPosition(x, (y * 8) - 7, BACKGROUND_RED, game, ' ');
+                ReDrawPosition(&x, (y * 8) - 7, BACKGROUND_RED, &game, ' ');
             }
             ///Hp Number
             else if(y - map.SizeY == 1 && x == 14){
-                ReDrawPosition(x, (y * 8) - 7, BACKGROUND_INTENSITY | BACKGROUND_INTENSITY, game, '1');
+                ReDrawPosition(&x, (y * 8) - 7, BACKGROUND_INTENSITY | BACKGROUND_INTENSITY, &game, '1');
             }else if(y - map.SizeY == 1 && x == 15){
-                ReDrawPosition(x, (y * 8) - 7, BACKGROUND_INTENSITY | BACKGROUND_INTENSITY, game, '0');
+                ReDrawPosition(&x, (y * 8) - 7, BACKGROUND_INTENSITY | BACKGROUND_INTENSITY, &game, '0');
             }
             ++x;
         }
@@ -404,7 +404,7 @@ void initPlayerGUI()
 }
 
 ///Map
-void createMap(int seed, char air[], char block[])
+void createMap(char *air, char *block)
 {
     srand(time(NULL));
 
@@ -552,53 +552,53 @@ void createMap(int seed, char air[], char block[])
     }
 }
 
-void drawMap(struct Map map, struct Cube cubes[], struct Game game, struct Player player)
+void drawMap(struct Map *map, struct Cube *cubes, struct Game *game, struct Player *player)
 {
     int y = 0;
-    while(player.watchDistanceY * 2 != y)
+    while(player->watchDistanceY * 2 != y)
     {
         int x = 0;
-        while(player.watchDistanceX * 2 != x)
+        while(player->watchDistanceX * 2 != x)
         {
             int b = 0;
-            while(sizeof(cubes) != b){
-                if(map.Matrix[getPosition(map.SizeX, player.y - player.watchDistanceY + y, player.x - player.watchDistanceX + x)] == cubes[b].Symbol){
+            while(5 != b){
+                if(map->Matrix[getPosition(map->SizeX, player->y - player->watchDistanceY + y, player->x - player->watchDistanceX + x)] == cubes[b].Symbol){
                     int k = 0;
                     while (k != 8) {
                         int i = 0;
                         while (i != 8) {
                                 ///Color B(Blue), L(Lite Blue), G(Green), H(Lite Green), T(Gray), Z(Lite Gray), O(Orange), A(Black)
-                                if(cubes[b].Texture[k * 8 + i] == 'B' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'B'){      /// 6 = player.watchDistance * 2
+                                if(cubes[b].Texture[k * 8 + i] == 'B' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'B'){      /// 6 = player.watchDistance * 2
                                     ReDrawPosition(x * 8 + i, y * 8 + k, Blue, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'B';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'B';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'L'  && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'L'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'L'  && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'L'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, LiteBlue, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'L';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'L';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'G' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'G'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'G' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'G'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, Green, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'G';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'G';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'H' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'H'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'H' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'H'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, LiteGreen, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'H';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'H';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'T' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'T'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'T' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'T'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, Gray, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'T';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'T';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'Z' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'Z'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'Z' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'Z'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, LiteGray, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'Z';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'Z';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'O' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'O'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'O' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'O'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, Orange, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'O';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'O';
                                 }
-                                else if(cubes[b].Texture[k * 8 + i] == 'A' && Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'A'){
+                                else if(cubes[b].Texture[k * 8 + i] == 'A' && player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] != 'A'){
                                     ReDrawPosition(x * 8 + i, y * 8 + k, Black, game, ' ');
-                                    Player1.ViewMatrix[getPosition(8 * player.watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'A';
+                                    player->ViewMatrix[getPosition(8 * player->watchDistanceX * 2, y * 8 + k, x * 8 + i)] = 'A';
                                 }
 
                             ++i;
@@ -656,10 +656,10 @@ int getPosition(int sizeX, int Y, int X)
     return ((OneLine * Y) + X);
 }
 
-void ReDrawPosition(int x, int y, unsigned short colour, struct Game game, char Text)
+void ReDrawPosition(int *x, int *y, unsigned short *colour, struct Game *game, char *Text)
 {
     COORD coord = { (SHORT)x, (SHORT)y };
-    SetConsoleCursorPosition(game.hOut, coord);
-    SetConsoleTextAttribute(game.hOut, colour);
+    SetConsoleCursorPosition(game->hOut, coord);
+    SetConsoleTextAttribute(game->hOut, colour);
     printf("%c", Text);
 }
